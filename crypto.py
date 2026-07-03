@@ -1,15 +1,23 @@
 from cryptography.fernet import Fernet
-import hashlib
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from cryptography.hazmat.primitives import hashes
 import base64
 
-SECRET_KEY = 'B207-vault-secret-key-2024'
+# derives a fernet key from the users master password + their salt
+# so the vault entries can only be decrypted with the master password
+def derive_key(master_password, salt):
+    kdf = PBKDF2HMAC(
+        algorithm=hashes.SHA256(),
+        length=32,
+        salt=bytes.fromhex(salt),
+        iterations=200000,
+    )
+    return base64.urlsafe_b64encode(kdf.derive(master_password.encode('utf-8')))
 
-# fernet needs a 32 byte base64 key so we hash our secret to get one
-key = base64.urlsafe_b64encode(hashlib.sha256(SECRET_KEY.encode('utf-8')).digest())
-fernet = Fernet(key)
-
-def encrypt_password(plain_text):
+def encrypt_password(plain_text, key):
+    fernet = Fernet(key)
     return fernet.encrypt(plain_text.encode('utf-8')).decode('utf-8')
 
-def decrypt_password(token):
+def decrypt_password(token, key):
+    fernet = Fernet(key)
     return fernet.decrypt(token.encode('utf-8')).decode('utf-8')

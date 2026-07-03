@@ -1,8 +1,9 @@
 from flask import Flask, render_template, redirect, url_for, request, session, flash, jsonify
 from flask_wtf.csrf import CSRFProtect
 from models import db, User, PasswordEntry
-from crypto import encrypt_password, decrypt_password
+from crypto import encrypt_password, decrypt_password, derive_key
 import bcrypt
+import os
 import secrets
 import string
 from functools import wraps
@@ -55,7 +56,9 @@ def register():
 
         # bcrypt adds its own random salt so we dont need to store one separately
         hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-        new_user = User(username=username, email=email, password_hash=hashed.decode('utf-8'))
+        # separate salt for the encryption key derivation, bcrypt's salt isnt exposed to us
+        enc_salt = os.urandom(16).hex()
+        new_user = User(username=username, email=email, password_hash=hashed.decode('utf-8'), salt=enc_salt)
         db.session.add(new_user)
         db.session.commit()
         flash('Account created successfully. You can now login.')
@@ -73,6 +76,8 @@ def login():
         if user and bcrypt.checkpw(password.encode('utf-8'), user.password_hash.encode('utf-8')):
             session['user_id'] = user.id
             session['username'] = user.username
+            # derived here since this is the only point we have the plaintext master password
+            session['enc_key'] = derive_key(password, user.salt).decode('utf-8')
             return redirect(url_for('dashboard'))
         flash('Incorrect username or password.')
 
@@ -107,7 +112,7 @@ def add():
             site_name=site_name,
             site_url=site_url,
             username=username,
-            encrypted_password=encrypt_password(password)
+            encrypted_password=encrypt_password(password, session['enc_key'])
         )
         db.session.add(entry)
         db.session.commit()
@@ -120,7 +125,7 @@ def add():
 @login_required
 def view(entry_id):
     entry = PasswordEntry.query.filter_by(id=entry_id, user_id=session['user_id']).first_or_404()
-    decrypted = decrypt_password(entry.encrypted_password)
+    decrypted = decrypt_password(entry.encrypted_password, session['enc_key'])
     return render_template('view.html', entry=entry, decrypted_password=decrypted)
 
 @app.route('/edit/<int:entry_id>', methods=['GET', 'POST'])
@@ -134,12 +139,12 @@ def edit(entry_id):
         entry.username = request.form.get('username', '').strip()
         new_password = request.form.get('password', '')
         if new_password:
-            entry.encrypted_password = encrypt_password(new_password)
+            entry.encrypted_password = encrypt_password(new_password, session['enc_key'])
         db.session.commit()
         flash('Entry updated.')
         return redirect(url_for('dashboard'))
 
-    current_password = decrypt_password(entry.encrypted_password)
+    current_password = decrypt_password(entry.encrypted_password, session['enc_key'])
     return render_template('edit.html', entry=entry, current_password=current_password)
 
 @app.route('/delete/<int:entry_id>', methods=['POST'])
