@@ -1,4 +1,4 @@
-# B207 Final Assessment - Password Vault
+# B207 Final Assessment - Password Manager
 
 This is a simple password manager web app made with Flask for my B207 final assessment. You can register an account, log in, and store your website passwords safely. The passwords are encrypted before they go into the database.
 
