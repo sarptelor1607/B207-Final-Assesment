@@ -20,9 +20,11 @@ This will:
 2. Install everything from `requirements.txt`
 3. Run `seed.py` which creates the database and adds a demo user
 
-After that just start the app:
+The venv gets activated inside the script, but that doesn't carry over to your terminal once it finishes, so activate it again before starting the app:
 
 ```bash
+source venv/bin/activate      # on Mac/Linux
+venv\Scripts\activate         # on Windows
 python app.py
 ```
 
