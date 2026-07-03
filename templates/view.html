@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4>View Entry</h4>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-sm btn-secondary">Back</a>
+        </div>
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label text-muted">Site Name</label>
+                    <p class="fs-5">{{ entry.site_name }}</p>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label text-muted">URL</label>
+                    <p>
+                        {% if entry.site_url %}
+                        <a href="{{ entry.site_url }}" target="_blank">{{ entry.site_url }}</a>
+                        {% else %}
+                        -
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label text-muted">Username / Email</label>
+                    <p>{{ entry.username if entry.username else '-' }}</p>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label text-muted">Password</label>
+                    <div class="input-group">
+                        <input type="password" id="pwdField" class="form-control font-monospace" value="{{ decrypted_password }}" readonly>
+                        <button class="btn btn-outline-secondary" type="button" onclick="toggleVisibility()">Show</button>
+                        <button class="btn btn-outline-secondary" type="button" onclick="copyPassword()">Copy</button>
+                    </div>
+                    <div id="copyMsg" class="form-text text-success" style="display:none;">Copied to clipboard.</div>
+                </div>
+                <a href="{{ url_for('edit', entry_id=entry.id) }}" class="btn btn-primary">Edit</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleVisibility() {
+    var field = document.getElementById('pwdField');
+    var btn = field.nextElementSibling;
+    if (field.type === 'password') {
+        field.type = 'text';
+        btn.textContent = 'Hide';
+    } else {
+        field.type = 'password';
+        btn.textContent = 'Show';
+    }
+}
+
+function copyPassword() {
+    var field = document.getElementById('pwdField');
+    navigator.clipboard.writeText(field.value).then(function() {
+        document.getElementById('copyMsg').style.display = 'block';
+        setTimeout(function() {
+            document.getElementById('copyMsg').style.display = 'none';
+        }, 2000);
+    });
+}
+</script>
+{% endblock %}

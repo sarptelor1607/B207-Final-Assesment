@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4>My Passwords</h4>
+    <a href="{{ url_for('add') }}" class="btn btn-primary">+ Add New</a>
+</div>
+
+{% if entries %}
+<div class="table-responsive">
+    <table class="table table-bordered table-hover bg-white">
+        <thead class="table-dark">
+            <tr>
+                <th>Site</th>
+                <th>URL</th>
+                <th>Username</th>
+                <th>Password</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for entry in entries %}
+            <tr>
+                <td>{{ entry.site_name }}</td>
+                <td>
+                    {% if entry.site_url %}
+                    <a href="{{ entry.site_url }}" target="_blank">{{ entry.site_url }}</a>
+                    {% else %}
+                    -
+                    {% endif %}
+                </td>
+                <td>{{ entry.username if entry.username else '-' }}</td>
+                <td>••••••••</td>
+                <td>
+                    <a href="{{ url_for('view', entry_id=entry.id) }}" class="btn btn-sm btn-outline-secondary">View</a>
+                    <a href="{{ url_for('edit', entry_id=entry.id) }}" class="btn btn-sm btn-outline-primary">Edit</a>
+                    <form method="POST" action="{{ url_for('delete', entry_id=entry.id) }}" style="display:inline;" onsubmit="return confirm('Delete this entry?')">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="text-center text-muted mt-5">
+    <p>No passwords saved yet. <a href="{{ url_for('add') }}">Add your first one.</a></p>
+</div>
+{% endif %}
+{% endblock %}
