@@ -9,7 +9,7 @@ import string
 from functools import wraps
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'b207-secret-key-do-not-share'
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', secrets.token_hex(32))
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///vault.db'
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 
